@@ -3,8 +3,10 @@
 参考 [e-imaxina/cordova-plugin-deeplinks](https://github.com/e-imaxina/cordova-plugin-deeplinks)
 
 - 🌟 支持 Android 13
+- 🌟 添加 Types 定义
+- 🐛 修复了一些在最新版本 SDK 上面出现的问题
 
-## 官方文档:
+## 官方文档
 
 - [Universal Links on iOS](https://developer.apple.com/library/ios/documentation/General/Conceptual/AppSearch/UniversalLinks.html)
 - [Deep Linking on Android](https://developer.android.com/training/app-indexing/deep-linking.html)
@@ -14,24 +16,24 @@
 ## 用法
 
 1. 安装插件 (查看 [安装](#安装)).
-2. 在 `config.xml` 中配置链接 (查看 [Cordova 配置](#Cordova配置)).
+2. 在 `config.xml` 中配置链接 (查看 [Cordova 配置](#cordova配置)).
 3. 监听链接启动事件 (查看 [监听链接启动事件](#监听链接启动事件)).
-4. web 集成 (查看 [安卓 web 集成](#安卓web集成) 和 [iOS-web 集成](#iOS-web集成)).
+4. web 集成 (查看 [安卓 web 集成](#安卓web集成) 和 [iOS-web 集成](#ios-web集成)).
 5. 启动项目
-6. 本地测试 (查看 [安卓本地测试](#安卓本地测试) 和 [iOS 本地测试](#iOS本地测试)).
+6. 本地测试 (查看 [安卓本地测试](#安卓本地测试) 和 [iOS 本地测试](#ios本地测试)).
 
 ## 支持平台
 
-- Android 4.0.0 or above.
-- iOS 9.0 or above. Xcode 7 is required. To build plugin with Xcode 6
+- Android 4.0.0 或以上。
+- iOS 9.0 或以上。
 
 ### 安装
 
-```sh
+```shell
 cordova plugin add cordova-wtto00-universal-link
 ```
 
-### Cordova 配置
+### Cordova配置
 
 项目根目录下的`config.xml`。
 
@@ -77,14 +79,16 @@ cordova plugin add cordova-wtto00-universal-link
 `<path />` 标签定义主机域名下的哪些路径将被响应打开 APP。如果没有 `path` 标签，则响应所有的路径。
 
 - `url` - 路径地址 **This is a required attribute.**
-- `event` - 链接启动 APP 后，在 APP 中监听的事件名称。默认事件名称是：`didLaunchAppFromLink`
+- `event` - 链接启动 APP 后，在 APP 中监听的事件名称。空缺的话，将会触发父级 `host` 标签上定义的事件名称。
+
+多个 `path` 标签，可以对与不同的链接路径，监听不同的处理事件。
 
 示例：
 
 ```xml
 <universal-links>
     <host name="example.com">
-        <path url="/some/path" />
+        <path url="/some/path" event="my_launch_event_for_this_path" />
     </host>
 </universal-links>
 ```
@@ -124,53 +128,29 @@ cordova plugin add cordova-wtto00-universal-link
 
 #### ios-team-id
 
-As described in `Step 2` of [Configure apple-app-site-association file for website](#configure-apple-app-site-association-file-for-website) section: when application is build from the CLI - plugin generates `apple-app-site-association` files for each host, defined in `config.xml`. In them there's an `appID` property that holds your iOS Team ID and Bundle ID:
+`ios-team-id` 标签用于生成 iOS 配置文件 `apple-app-site-association`。
 
-```json
-{
-  "applinks": {
-    "apps": [],
-    "details": [
-      {
-        "appID": "<TEAM_ID_FROM_MEMBER_CENTER>.<BUNDLE_ID>",
-        "paths": ["/some/path/*"]
-      }
-    ]
-  }
-}
-```
+当使用 CLI 构建项目时，本插件会自动在 `ul_web_hooks` 目录中生成用于上传到服务器的配置文件 `apple-app-site-association`
 
-- `<BUNDLE_ID>` is replaced with the id, that is defined in the `widget` of your `config.xml`. For example:
+示例：
 
-  ```xml
-  <widget id="com.example.ul" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-  ```
-
-- `<TEAM_ID_FROM_MEMBER_CENTER>` - that property is defined in the member center of your iOS account. So, you can either put it in the generated `apple-app-site-association` file manually, or use `<ios-team-id>` preference in `config.xml` like so:
-
-  ```xml
-  <universal-links>
-      <ios-team-id value="<TEAM_ID_FROM_MEMBER_CENTER>" />
-  </universal-links>
-  ```
-
-For example, following `config.xml`
+`config.xml` :
 
 ```xml
 <widget id="com.example.ul" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
 
-<!-- some other cordova preferences -->
+  <!-- some other cordova preferences -->
 
-<universal-links>
-    <ios-team-id value="1Q2WER3TY" />
-    <host name="mysite.com" >
-      <path url="/some/path/*" />
-    </host>
-</universal-links>
+  <universal-links>
+      <ios-team-id value="1Q2WER3TY" />
+      <host name="mysite.com" >
+        <path url="/some/path/*" />
+      </host>
+  </universal-links>
 </widget>
 ```
 
-will result into
+将会生成配置文件 `apple-app-site-association` :
 
 ```json
 {
@@ -186,21 +166,25 @@ will result into
 }
 ```
 
-This is iOS-only preference, Android doesn't need it.
+该标签作用仅仅时生成这个 iOS 的配置文件。不影响打包运行。Android 会忽略此配置。
 
-#### Prevent Android from creating multiple app instances
+#### 阻止安卓生成多个APP实例
 
-When clicking on a universal link from another App (typically from an email client), Android will likely create a new instance of your app, even if it is already loaded in memory. It may even create a new instance with each click, resulting in many instances of your app in the task switcher. See details in [issue #37](https://github.com/nordnet/cordova-universal-links-plugin/issues/37).
+当通过 universal link 打开安卓APP时，安卓默认会重新生成一个新实例，即使APP已经在运行中。
 
-To force Android opening always the same app instance, a known workaround is to change the [activity launch mode](https://developer.android.com/guide/topics/manifest/activity-element.html#lmode) to `singleInstance`. To do so, you can use the following preference in Cordova `config.xml` file:
+为了解决此问题，需要在 `config.xml` 文件中配置单例模式：
 
 ```xml
 <preference name="AndroidLaunchMode" value="singleInstance" />
 ```
 
-### Application launch handling
+### 监听链接启动事件
 
-As mentioned - it is not enough just to redirect a user into your app, you will also need to display the correct content. In order to solve that - plugin provides JavaScript module: `universalLinks`. To get notified on application launch do the following:
+仅仅是打开 APP 是不够的，你需要获得打开 APP 的链接地址，然后根据链接地址以及参数，做各种不同的逻辑处理。`universalLinks` 变量已挂载在全局变量 `window` 下，可以直接使用，并且在 `Typescript` 中也定义了类型。
+
+**注意：** 监听事件，必须在 `cordova` 生命周期的 `deviceready` 事件后执行，即 `document.addEventListener("deviceready",callback, false);` 中的回调 `callback` 中注册监听事件。
+
+示例：
 
 ```js
 universalLinks.subscribe("eventName", function (eventData) {
@@ -209,16 +193,20 @@ universalLinks.subscribe("eventName", function (eventData) {
 });
 ```
 
-If you didn't specify event name for path and host in `config.xml` - just pass `null` as a first parameter:
+如果你没有在 `config.xml` 中配置 `eventName`, 则可以使用默认的事件名称 `didLaunchAppFromLink`。
 
 ```js
-universalLinks.subscribe(null, function (eventData) {
+universalLinks.subscribe('didLaunchAppFromLink', function (eventData) {
   // do some work
   console.log("Did launch application from the link: " + eventData.url);
 });
 ```
 
-`eventData` holds information about the launching url. For example, for `http://myhost.com/news/ul-plugin-released.html?foo=bar#cordova-news` it will be:
+`eventData` 参数是打开APP的链接地址。
+
+比如： 对于 `http://myhost.com/news/ul-plugin-released.html?foo=bar#cordova-news`
+
+`eventData` 将会是如下的数据：
 
 ```json
 {
@@ -233,584 +221,151 @@ universalLinks.subscribe(null, function (eventData) {
 }
 ```
 
-- `url` - original launch url;
-- `scheme` - url scheme;
-- `host` - hostname from the url;
-- `path` - path component of the url;
-- `params` - dictionary with query parameters; the ones that after `?` character;
-- `hash` - content after `#` character.
-
-If you want - you can also unsubscribe from the events later on:
+如果你想，你还可以取消监听该事件，如下所示：
 
 ```js
 universalLinks.unsubscribe("eventName");
 ```
 
-Now it's time for some examples. In here we are gonna use Android, because it is easier to test (see [testing for Android](#testing-ul-for-android-locally) section). JavaScript side is platform independent, so all the example code below will also work for iOS.
+### web-集成
 
-1. Create new Cordova application and add Android platform.
+前端方面的已基本完成了，接下来你需要在后端服务器上面做一些配置。
 
-```sh
-cordova create TestAndroidApp com.example.ul TestAndroidApp
-cd ./TestAndroidApp
-cordova platform add android
-```
-
-2. Add UL plugin:
-
-```sh
-cordova plugin add cordova-universal-links-plugin
-```
-
-3. Add `<universal-links>` preference into `config.xml`:
-
-```xml
-<!-- some other data from config.xml -->
-<universal-links>
- <host name="myhost.com">
-   <path url="/news/" event="openNewsListPage" />
-   <path url="/news/*" event="openNewsDetailedPage" />
- </host>
-</universal-links>
-```
-
-As you can see - we want our application to be launched, when user goes to the `news` section of our website. And for that - we are gonna dispatch different events to understand, what has happened.
-
-4. Subscribe to `openNewsListPage` and `openNewsDetailedPage` events. For that - open `www/js/index.js` and make it look like that:
-
-```js
-var app = {
-  // Application Constructor
-  initialize: function () {
-    this.bindEvents();
-  },
-
-  // Bind Event Listeners
-  bindEvents: function () {
-    document.addEventListener("deviceready", this.onDeviceReady, false);
-  },
-
-  // deviceready Event Handler
-  onDeviceReady: function () {
-    console.log("Device is ready for work");
-    universalLinks.subscribe("openNewsListPage", app.onNewsListPageRequested);
-    universalLinks.subscribe(
-      "openNewsDetailedPage",
-      app.onNewsDetailedPageRequested
-    );
-  },
-
-  // openNewsListPage Event Handler
-  onNewsListPageRequested: function (eventData) {
-    console.log("Showing list of awesome news.");
-
-    // do some work to show list of news
-  },
-
-  // openNewsDetailedPage Event Handler
-  onNewsDetailedPageRequested: function (eventData) {
-    console.log("Showing to user details page: " + eventData.path);
-
-    // do some work to show detailed page
-  },
-};
-
-app.initialize();
-```
-
-Now, if the user clicks on `http://myhost.com/news/` link - method `onNewsListPageRequested` will be called, and for every link like `http://myhost.com/news/*` - `onNewsDetailedPageRequested`. Basically, we created a mapping between the links and JavaScript methods.
-
-5. Build and run your application:
-
-```sh
-cordova run android
-```
-
-6. Close your app.
-
-7. Execute in the terminal:
-
-```sh
-adb shell am start -W -a android.intent.action.VIEW -d "http://myhost.com/news/" com.example.ul
-```
-
-As a result, your application will be launched, and in JavaScript console you will see message:
-
-```
-Showing to user list of awesome news.
-```
-
-Repeat operation, but this time with the command:
-
-```sh
-adb shell am start -W -a android.intent.action.VIEW -d "http://myhost.com/news/ul-plugin-released.html" com.example.ul
-```
-
-Application will be launched and you will see in JS console:
-
-```
-Showing to user details page: /news/ul-plugin-released.html
-```
-
-Now, let's say, you want your app to handle all links from `myhost.com`, but you need to keep the mapping for the paths. For that you just need to modify your `config.xml` and add default event handler on JavaScript side:
-
-1. Open `config.xml` and change `<universal-links>` block like so:
+假如你在 `config.xml` 中是这样配置的：
 
 ```xml
 <universal-links>
- <host name="myhost.com">
-   <path url="/news/" event="openNewsListPage" />
-   <path url="/news/*" event="openNewsDetailedPage" />
-   <path url="*" event="launchedAppFromLink" />
- </host>
+    <ios-team-id value="1Q2WER3TY" />
+    <host name="mysite.com" scheme="https" >
+      <path url="/some/path/*" />
+    </host>
 </universal-links>
 ```
 
-As you can see - we added `*` as `path`. This way we declared, that application should be launched from any `http://myhost.com` link.
+#### 安卓web集成
 
-2. Add handling for default UL event in the `www/js/index.js`:
+1. 在服务器上传配置文件
 
-```js
-var app = {
-  // Application Constructor
-  initialize: function () {
-    this.bindEvents();
-  },
+   按照上面的 `config.xml` 示例，你需要在 `mysite.com` 域名所解析的服务器上的**根目录**中，创建 `.well-known` 目录，并在该目录下，创建文件 `assetlinks.json` ，内容如下:
 
-  // Bind Event Listeners
-  bindEvents: function () {
-    document.addEventListener("deviceready", this.onDeviceReady, false);
-  },
-
-  // deviceready Event Handler
-  onDeviceReady: function () {
-    console.log("Handle deviceready event if you need");
-    universalLinks.subscribe("openNewsListPage", app.onNewsListPageRequested);
-    universalLinks.subscribe(
-      "openNewsDetailedPage",
-      app.onNewsDetailedPageRequested
-    );
-    universalLinks.subscribe(
-      "launchedAppFromLink",
-      app.onApplicationDidLaunchFromLink
-    );
-  },
-
-  // openNewsListPage Event Handler
-  onNewsListPageRequested: function (eventData) {
-    console.log("Showing to user list of awesome news");
-
-    // do some work to show list of news
-  },
-
-  // openNewsDetailedPage Event Handler
-  onNewsDetailedPageRequested: function (eventData) {
-    console.log("Showing to user details page for some news");
-
-    // do some work to show detailed page
-  },
-
-  // launchedAppFromLink Event Handler
-  onApplicationDidLaunchFromLink: function (eventData) {
-    console.log("Did launch app from the link: " + eventData.url);
-  },
-};
-
-app.initialize();
-```
-
-That's it! Now, by default for `myhost.com` links `onApplicationDidLaunchFromLink` method will be called, but for `news` section - `onNewsListPageRequested` and `onNewsDetailedPageRequested`.
-
-### Android web integration
-
-If you have already tried to use `adb` to simulate application launch from the link - you probably saw chooser dialog with at least two applications in it: browser and your app. This happens because web content can be handled by multiple things. To prevent this from happening you need to activate app indexing. App indexing is the second part of deep linking, where you link that URI/URL between Google and your app.
-
-Integration process consists of three steps:
-
-1. Modify your web pages by adding special `<link />` tags in the `<head />` section.
-2. Verify your website on Webmaster Tools.
-3. Connect your app in the Google Play console.
-
-#### Modify web pages
-
-To create a link between your mobile content and the page on the website you need to include proper `<link />` tags in the `<head />` section of your website.
-
-Link tag is constructed like so:
-
-```html
-<link
-  rel="alternate"
-  href="android-app://<package_name>/<scheme>/<host><path>"
-/>
-```
-
-where:
-
-- `<package_name>` - your application's package name;
-- `<scheme>` - url scheme;
-- `<host>` - hostname;
-- `<path>` - path component.
-
-For example, if your `config.xml` file looks like this:
-
-```xml
-<universal-links>
- <host name="myhost.com">
-   <path url="/news/" />
-   <path url="/profile/" />
- </host>
-</universal-links>
-```
-
-and a package name is `com.example.ul`, then `<head />` section on your website will be:
-
-```html
-<head>
-  <link
-    rel="alternate"
-    href="android-app://com.example.ul/http/myhost.com/news/"
-  />
-  <link
-    rel="alternate"
-    href="android-app://com.example.ul/http/myhost.com/profile/"
-  />
-
-  <!-- Your other stuff from the head tag -->
-</head>
-```
-
-Good news is that **plugin generates those tags for you**. When you run `cordova build` (or `cordova run`) - they are placed in `ul_web_hooks/android/android_web_hook.html` file inside your Cordova project root directory.
-
-So, instead of manually writing them down - you can take them from that file and put on the website.
-
-#### Verify your website on Webmaster Tools
-
-If your website is brand new, you’ll want to verify it through [Webmaster Tools](https://www.google.com/webmasters/tools/). That’s how the Google crawler knows that it’s there and can index it to do everything it needs to do. In order to do that - just add your website in the console and follow the instructions to versify, that you own the site. Most likely, they will ask you to add something on your page.
-
-#### Connect your app in the Google Play console
-
-Next, you’ll want to connect your app using the Google Play Console so the app indexing starts working. If you go to your app, there’s a menu that says `Services and API` in which you can click `Verify Website`, and provide the URL to check that it has the appropriate tags in the HTML. Once that’s all set up, it will start showing in search results.
-
-#### Digital Asset Links support
-
-For Android version 6.0 (Marshmallow) or greater [Digital Asset Links](https://developers.google.com/digital-asset-links/v1/getting-started) can be used.
-
-Here's a very simplified example of how the website `www.example.com` could use Digital Asset Links to specify that any links to URLs in that site should open in a designated app rather than the browser:
-
-1. The website `www.example.com` publishes a statement list at `https://www.example.com/.well-known/assetlinks.json`. This is the official name and location for a statement list on a site. Statement lists in any other location, or with any other name, are not valid for this site. In our example, the statement list consists of one statement, granting its Android app the permission to open links on its site:
-
-```json
-[
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "com.example.app",
-      "sha256_cert_fingerprints": ["hash_of_app_certificate"]
+   ```json
+   [
+    {
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "<PACKAGE_ID>",
+        "sha256_cert_fingerprints":["<SHA256_CERT_FINGERPRINTS>"]
+      }
     }
-  }
-]
-```
+   ]
+   ```
 
-A statement list supports an array of statements within the [ ] marks, but our example file contains only one statement.
+   详情可查看 [官方说明](https://developer.android.com/training/app-links/verify-android-applinks?hl=zh-cn#web-assoc)
 
-2. The Android app listed in the statement above has an intent filter that specifies the scheme, host, and path pattern of URLs that it wants to handle: in this case, `https://www.example.com`. The intent filter includes a special attribute `android:autoVerify`, new to Android M, which indicates that Android should verify the statement on the website, described in the intent filter when the app is installed.
+   - `<PACKAGE_ID>` : 你的包名。
+   - `<SHA256_CERT_FINGERPRINTS>` : 应用的签名证书的 SHA256 指纹。可以通过以下命令获得。
 
-3. A user installs the app. Android sees the intent filter with the `autoVerify` attribute and checks for the presence of the statement list at the specified site. If present, Android checks whether that file includes a statement granting link handling to the app, and verifies the app against the statement by certificate hash. If everything checks out, Android will then forward any `https://www.example.com` intents to the `example.com` app.
+     ```shell
+     keytool -list -v -keystore my-release-key.keystore
+     # 14:6D:E9:83:C5:73:06:50:D8:EE:B9:95:2F:34:FC:64:16:A0:83:42:E6:1D:BE:A8:8A:04:96:B2:3F:CF:44:E5
+     ```
 
-4. The user clicks a link to `https://www.example.com/puppies` on the device. This link could be anywhere: in a browser, in a Google Search Appliance suggestion, or anywhere else. Android forwards the intent to the `example.com` app.
+1. 确认配置文件有效性  
+   按照上面的配置示例：
 
-5. The `example.com` app receives the intent and chooses to handle it, opening the puppies page in the app. If for some reason the app had declined to handle the link, or if the app were not on the device, then the link will be send to the next default intent handler, matching that intent pattern (i.e. browser).
+   - `https://mysite.com/.well-known/assetlinks.json` 该链接应该能够正常访问或可以下载。
+   - `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://mysite.com&elation=delegate_permission/common.handle_all_urls` 该链接应该能返回配置的正确信息。
 
-### Testing UL for Android locally
+   > 注意：测试链接，请更换为自己的配置信息。
+1. 在链接 `html` 页面上添加信息
 
-To test Android application for Deep Linking support you just need to execute the following command in the console:
+   ```html
+   <link rel="alternate" href="android-app://<PACKAGE_ID>/<SCHEME>/<HOST><PATH>" />
+   ```
 
-```sh
-adb shell am start
-        -W -a android.intent.action.VIEW
-        -d <URI> <PACKAGE>
-```
+   - `<PACKAGE_ID>` : APP包名。
+   - `<SCHEME>`: `config.xml` 中配置的 `host` 标签协议。
+   - `<HOST>`: `config.xml` 中配置的 `host` 标签域名。
+   - `<PATH>`: `config.xml` 中配置的 `host` 中子元素 `path` 标签地址。假如配置多个 `path` 标签，则需要有多个对应的 `link` 标签。
 
-where
+   > `config.xml` 中配置后，通过CLI启动命令 `cordova prepare android` 会自动在项目根目录下的 `ul_web_hooks/android` 目录中生成一个 `android_web_hook.html` 文件。可以拷贝其中的 `link` 标签，粘贴到自己网站页面的 `html` 中。
 
-- `<URI>` - url that you want to test;
-- `<PACKAGE>` - your application's package name.
+#### iOS-web集成
 
-**Note:** if you didn't configure your website for UL support - then most likely after executing the `adb` command you will see a chooser dialog with multiple applications (at least browser and your test app). This happens because you are trying to view web content, and this can be handled by several applications. Just choose your app and proceed. If you configured your website as [described above](#android-web-integration) - then no dialog is shown and your application will be launched directly.
+1. 在服务器上传配置文件
 
-Let's create new application to play with:
+   按照上面的 `config.xml` 示例，你需要在 `mysite.com` 域名所解析的服务器上的**根目录**中，创建 `.well-known` 目录，并在该目录下，创建文件 `apple-app-site-association` ，内容如下:
 
-1. Create new Cordova project and add Android platform to it:
+   ```json
+   {
+     "applinks": {
+       "apps": [],
+       "details": [
+         {
+           "appID": "<TEAM_ID_FROM_MEMBER_CENTER>.<BUNDLE_ID>",
+           "paths": [
+             "/some/path/*"
+           ]
+         }
+       ]
+     }
+   }
+   ```
 
-```sh
-cordova create TestAndroidApp com.example.ul TestAndroidApp
-cd ./TestAndroidApp
-cordova platform add android
-```
+   也可以直接在根目录中创建该文件，`.well-known` 目录可省略。
 
-2. Add UL plugin:
+   - `<TEAM_ID_FROM_MEMBER_CENTER>` : 开发者team_id。
+   - `<BUNDLE_ID>` : APP包名。
 
-```sh
-cordova plugin add cordova-universal-links-plugin
-```
+   > `config.xml` 中配置后，通过CLI启动命令 `cordova prepare ios` 会自动在项目根目录下的 `ul_web_hooks` 目录中生成文件 `<hostname>#apple-app-site-association`。可改名后直接上传到自己的域名服务器中。
 
-3. Add `<universal-links>` preference into `config.xml` (`TestAndroidApp/config.xml`):
+1. 确认配置文件有效性  
+   按照上面的配置示例：
 
-```xml
-<!-- some other data from config.xml -->
-<universal-links>
- <host name="myhost.com" />
-</universal-links>
-```
+   - `https://mysite.com/.well-known/apple-app-site-association` 或者 `https://mysite.com/apple-app-site-association` 该链接应该能够正常访问或可以下载。
+   - `https://app-site-association.cdn-apple.com/a/v1/mysite.com` 该链接应该能返回配置的正确信息。
 
-4. Build and run the app:
+   > 注意：测试链接，请更换为自己的配置信息。
+1. Associated Domains
 
-```sh
-cordova run android
-```
+   **注意：** 在 `apple` 开发者中心创建，在 `xcode` 中打包，所使用的证书，应该包含此功能选项。
 
-5. Close your application and return to console.
-6. Enter in console:
+### 启动项目
 
-```sh
-adb shell am start -W -a android.intent.action.VIEW -d "http://myhost.com/any/path" com.example.ul
-```
+现在万事具备了，启动项目，开始测试吧。
 
-As a result, your application will be launched and you will see in console:
+#### 安卓本地测试
 
-```
-Starting: Intent { act=android.intent.action.VIEW dat=http://myhost.com/any/path pkg=com.example.ul }
-Status: ok
-Activity: com.example.ul/.MainActivity
-ThisTime: 52
-TotalTime: 52
-Complete
-```
+1. 启动项目
 
-If you'll try to use host (or path), that is not defined in `config.xml` - you'll get a following error:
+   ```shell
+   cordova run android
+   ```
 
-```
-Starting: Intent { act=android.intent.action.VIEW dat=http://anotherhost.com/path pkg=com.example.ul }
-Error: Activity not started, unable to resolve Intent { act=android.intent.action.VIEW dat=http://anotherhost.com/path flg=0x10000000 pkg=com.example.ul }
-```
+1. 在设备上，关闭刚刚安装打开的APP
+1. 在终端中执行：
 
-This way you can experiment with your Android application and check how it corresponds to different links.
+   ```shell
+   adb shell am start -W -a android.intent.action.VIEW -d "<URL>" <PACKAGE_ID>
+   ```
 
-### iOS web integration
+   - `<URL>` : 响应的链接地址。按照上面的示例，应该是：`http://mysite.com/some/path/`。
+   - `<PACKAGE_ID>` : APP包名。
+   **注意：** 更换为自己的配置信息。
 
-In the case of iOS integration of the Universal Links is a little harder. It consist of two steps:
+没有出错的话，设备上应该直接打开了你正在开发的APP。
 
-1. Register your application on [developer console](https://developer.apple.com) and enable `Associated Domains` feature. Make sure your website is SSL ready.
-2. Generate, and upload `apple-app-site-association` file on your website (if you don't have it yet).
+#### ios本地测试
 
-First one you will have to do manually, but plugin will help you with the second step.
+1. 启动项目
 
-#### Activate UL support in member center
+   ```shell
+   cordova run ios
+   ```
 
-1. Go to your [developer console](https://developer.apple.com). Click on `Certificate, Identifiers & Profiles` and then on `Identifiers`.
+1. 在设备上，关闭刚刚安装打开的APP
+1. 在设备上，打开 `safari` ，输入地址 `http://mysite.com/some/path/` 并访问。  
+   **注意：** 更换为自己的配置信息。
 
-![Developer console](docs/images/developer-console.jpg?raw=true)
-
-2. If you already have a registered App Identifier - just skip this and go to `3`. If not - create it by clicking on `+` sign, fill out `name` and `bundle ID`. `name` can be whatever you want, but `bundle ID` should be the one you defined in your Cordova's `config.xml`.
-
-![App ID](docs/images/app-id.jpg?raw=true)
-
-3. In the `Application Services` section of your App Identifier activate `Associated Domains` and save the changes.
-
-![App ID](docs/images/app-associated-domains.jpg?raw=true)
-
-Now your App ID is registered and has `Associated Domains` feature.
-
-#### Configure apple-app-site-association file for website
-
-In order for Universal Links to work - you need to associate your application with the certain domain. For that you need to:
-
-1. Make your site to work over `https`.
-2. Create `apple-app-site-association` file, containing your App ID and paths you want to handle.
-3. Upload `apple-app-site-association` file in the root of your website.
-
-##### Step 1
-
-We are not gonna describe stuff regarding certificate acquiring and making your website to work over `https`. You can find lots of information about that on the Internet.
-
-##### Step 2
-
-When you run `cordova build` (or `cordova run`) - plugin takes data from `config.xml` and generates `apple-app-site-association` files for each host you defined. Files are placed in the `ul_web_hooks/ios/` folder of your Cordova project. File names are:
-
-```
-<hostname>#apple-app-site-association
-```
-
-For example, let's say your application's bundle ID is `com.example.ul`, and `config.xml` has several hosts:
-
-```xml
-<universal-links>
-  <host name="firsthost.com">
-    <path url="/some/path/*" />
-  </host>
-  <host name="secondhost.com" />
-</universal-links>
-```
-
-Run `cordova build`, and then go to `ul_web_hooks/ios/` folder in your Cordova project. You will see there two files:
-
-```
-firsthost.com#apple-app-site-association
-secondhost.com#apple-app-site-association
-```
-
-Content of the first one is:
-
-```json
-{
-  "applinks": {
-    "apps": [],
-    "details": [
-      {
-        "appID": "<YOUR_TEAM_ID_FROM_MEMBER_CENTER>.com.example.ul",
-        "paths": ["/some/path/*"]
-      }
-    ]
-  }
-}
-```
-
-And the second one:
-
-```json
-{
-  "applinks": {
-    "apps": [],
-    "details": [
-      {
-        "appID": "<YOUR_TEAM_ID_FROM_MEMBER_CENTER>.com.example.ul",
-        "paths": ["*", "/"]
-      }
-    ]
-  }
-}
-```
-
-**Note:** in the second case plugin will add `/` to the paths, so the app would be opened with `https://secondhost.com.com/` links, and not only with `https://secondhost.com/some/random.html`.
-
-Before uploading them on your servers - you need to replace `<YOUR_TEAM_ID_FROM_MEMBER_CENTER>` with your actual team ID from the member center. You can find it in `Developer Account Summary` section on the [developer.apple.com](https://developer.apple.com/membercenter/index.action#accountSummary).
-
-Also, it is a `Prefix` preference in the App ID description.
-
-![App ID team prefix](docs/images/app-id-team-prefix.jpg?raw=true)
-
-If you already have `apple-app-site-association` file - then you need to add `applinks` block to it from the generated file.
-
-##### Step 3
-
-Upload `apple-app-site-association` file in the root of your domain.
-
-**It should be downloadable from the direct link.** For example, `https://firsthost.com/apple-app-site-association`.
-
-**No redirects are allowed!** When application is launched - it downloads it from that link, so if it can't find it - Universal Links are not gonna work.
-
-That's it, you have finished configuring iOS for UL support.
-
-### Testing iOS application
-
-Unlike Android, Apple doesn't provide any tools to test Universal Links. So you have to do all the [integration stuff](#ios-web-integration) before any real testing. So please, do that.
-
-But if you don't want to... well, there is one way to skip it. You can use [branch.io](https://branch.io) to handle all the SSL/apple-app-site-association stuff for you. How to do that - described in their [documentation](https://dev.branch.io/recipes/branch_universal_links/#enable-universal-links-on-the-branch-dashboard). From there you can skip Xcode and SDK integration stuff, because you don't need that.
-
-Step-by-step guide:
-
-1. Go to developer console and register your App ID, as described in [Activating UL support in member center](#activate-ul-support-in-member-center).
-
-2. Register account on [branch.io](https://dashboard.branch.io/), if you don't have it yet.
-
-3. Login into [branch dashboard](https://dashboard.branch.io/). Go to `Settings` -> `Link Settings`, activate `Enable Universal Links`, fill in `Bundle identifier` and `Team ID`.
-
-![App ID](docs/images/branch-io.jpg?raw=true)
-
-4. It will take some time to update their servers, so be patient. To check if it is ready - just open [https://bnc.lt/apple-app-site-association](https://bnc.lt/apple-app-site-association) and search for your `Bundle identifier`.
-
-Pay attention for `paths` - if there is any for your app, then write it down.
-
-For example:
-
-```json
-...,"9F38WJR2U8.com.example.ul":{"paths":["/a2Be/*"]},...
-```
-
-5. Create new Cordova iOS application and add UL plugin:
-
-```sh
-cordova create TestProject com.example.ul TestProject
-cd ./TestProject
-cordova platform add ios
-cordova plugin add cordova-universal-links-plugin
-```
-
-6. Add `bnc.lt` and your other hosts into `config.xml`:
-
-```xml
-<universal-links>
-  <host name="bnc.lt" />
-  <host name="yourdomain.com" />
-</universal-links>
-```
-
-For test purpose you can leave only `bnc.lt` in there. But if you specifying your hosts - you need to [white label](https://dev.branch.io/recipes/branch_universal_links/#white-label-domains) them.
-
-7. Attach your real device to the computer and run application on it:
-
-```sh
-cordova run ios
-```
-
-Emulator will not work.
-
-8. Email yourself a link that need's to be tested.
-
-For example, `https://bnc.lt/a2Be/somepage.html`. As you can see, link constructed from hostname and path component, specified in `apple-app-site-association` file. This link may not even lead to the real page, it doesn't matter. It's only purpose is to open the app.
-
-Now click on your link. Application should be launched. If not - check all the steps above. Also, check your provisioning profiles in Xcode.
-
-### Useful notes on Universal Links for iOS
-
-#### They don't work everywhere
-
-First of all - you need to accept the fact, that Universal Links **doesn't work everywhere**. Some applications doesn't respect them. You can read more in [that article](https://blog.branch.io/ios-9.2-deep-linking-guide-transitioning-to-universal-links), section `Universal Links Still Don’t Work Everywhere`.
-
-#### How links handled in Safari
-
-When user clicks on the link - Safari checks, if any of the installed apps can handle it. If app is found - Safari starts it, if not - link opened as usually in the browser.
-
-Now, let's assume you have a following setup in `config.xml`:
-
-```xml
-<universal-links>
-  <host name="mywebsite.com">
-    <path url="/some/page.html" />
-  </host>
-</universal-links>
-```
-
-By this we state, that our app should handle `http://mywebsite.com/some/page.html` link. So, if user clicks on `http://mywebsite.com` - application would not launch. And this is totally as you want it to be. Now comes the interesting part: if user opens `http://mywebsite.com` in the Safari and then presses on `http://mywebsite.com/some/page.html` link - application is not gonna start, he will stay in the browser. And at the top of that page he will see a Smart Banner. To launch the application user will have to click on that banner. And this is a normal behaviour from iOS. If user already viewing your website in the browser - he doesn't want to leave it, when he clicks on some link, that leads on the page inside your site. But if he clicks on the `http://mywebsite.com/some/page.html` link from some other source - then it will start your application.
-
-Another thing that every developer should be aware of:
-
-When a user is in an app, opened by Universal Links - a return to browser option will persist at the top of the screen (i.e. `mywebsite.com`). Users who have clicked the `mywebsite.com` option will be taken to their Safari browser, and Smart Banner is persistently rendered on the top of the window. This banner has an `OPEN` call to action. For all future clicks of URLs, associated with this app via Universal Links, the app will never be launched again for the user, and the user will continue being redirected to the Safari page with the banner. If the user clicks `OPEN` - then the app will be launched, and all future clicks of the URL will deep linking the user to the app.
-
-### Additional documentation links
-
-**Android:**
-
-- [Video tutorial on Android App Indexing](https://realm.io/news/juan-gomez-android-app-indexing/)
-- [Enable Deep Linking on Android](https://developer.android.com/training/app-indexing/deep-linking.html)
-- [Specifying App Content for Indexing](https://developer.android.com/training/app-indexing/enabling-app-indexing.html)
-- [Documentation on enabling App Indexing on the website](https://developers.google.com/app-indexing/android/publish#host-your-links)
-
-**iOS:**
-
-- [Apple documentation on Universal Links](https://developer.apple.com/library/ios/documentation/General/Conceptual/AppSearch/UniversalLinks.html)
-- [Apple documentation on apple-app-site-association file](https://developer.apple.com/library/ios/documentation/Security/Reference/SharedWebCredentialsRef/index.html)
-- [How to setup universal links on iOS 9](https://blog.branch.io/how-to-setup-universal-links-to-deep-link-on-apple-ios-9)
-- [Branch.io documentation on universal links](https://dev.branch.io/recipes/branch_universal_links/#enable-universal-links-on-the-branch-dashboard)
-- [Where universal links don't work](https://blog.branch.io/ios-9.2-deep-linking-guide-transitioning-to-universal-links)
+没有出错的话，设备上应该直接打开了你正在开发的APP。
