@@ -1,0 +1,45 @@
+{
+  "name": "cordova-wtto00-universal-link",
+  "version": "1.0.0",
+  "description": "Cordova plugin to add in your application support for Universal Links (iOS 9) and Deep Links (Android). Basically, open application through the link in the browser.",
+  "types": "./types/index.d.ts",
+  "cordova": {
+    "id": "cordova-wtto00-universal-link",
+    "platforms": [
+      "ios",
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:wtto00/cordova-wtto00-universal-link.git"
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios",
+    "links",
+    "universal",
+    "deep links",
+    "universal links"
+  ],
+  "engines": {
+    "cordova-ios": ">=6",
+    "cordova-android": ">=11"
+  },
+  "dependencies": {
+    "xml2js": ">=0.4",
+    "rimraf": ">=2.4",
+    "node-version-compare": ">=1.0.1",
+    "plist": ">=1.2.0"
+  },
+  "author": "wtto00 <wtto00@outlook.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wtto00/cordova-wtto00-universal-link/issues"
+  },
+  "homepage": "https://github.com/wtto00/cordova-wtto00-universal-link#readme",
+  "devDependencies": {
+    "standard-version": "^7.0.0"
+  }
+}
