@@ -11,16 +11,13 @@
 - [Universal Links on iOS](https://developer.apple.com/library/ios/documentation/General/Conceptual/AppSearch/UniversalLinks.html)
 - [Deep Linking on Android](https://developer.android.com/training/app-indexing/deep-linking.html)
 
-如果 APP 没有安装的话，这个链接应该能够展示你的网站
-
 ## 用法
 
 1. 安装插件 (查看 [安装](#安装)).
 2. 在 `config.xml` 中配置链接 (查看 [Cordova 配置](#cordova配置)).
 3. 监听链接启动事件 (查看 [监听链接启动事件](#监听链接启动事件)).
 4. web 集成 (查看 [安卓 web 集成](#安卓web集成) 和 [iOS-web 集成](#ios-web集成)).
-5. 启动项目
-6. 本地测试 (查看 [安卓本地测试](#安卓本地测试) 和 [iOS 本地测试](#ios本地测试)).
+5. 启动项目，本地测试 (查看 [安卓本地测试](#安卓本地测试) 和 [iOS 本地测试](#ios本地测试)).
 
 ## 支持平台
 
@@ -33,7 +30,7 @@
 cordova plugin add cordova-wtto00-universal-link
 ```
 
-### Cordova配置
+### Cordova 配置
 
 项目根目录下的`config.xml`。
 
@@ -166,11 +163,11 @@ cordova plugin add cordova-wtto00-universal-link
 }
 ```
 
-该标签作用仅仅时生成这个 iOS 的配置文件。不影响打包运行。Android 会忽略此配置。
+该标签作用仅仅是生成这个 iOS 的配置文件。不影响打包运行。Android 会忽略此配置。
 
-#### 阻止安卓生成多个APP实例
+#### 阻止安卓生成多个 APP 实例
 
-当通过 universal link 打开安卓APP时，安卓默认会重新生成一个新实例，即使APP已经在运行中。
+当通过 universal link 打开安卓 APP 时，安卓默认会重新生成一个新实例，即使 APP 已经在运行中。
 
 为了解决此问题，需要在 `config.xml` 文件中配置单例模式：
 
@@ -187,10 +184,10 @@ cordova plugin add cordova-wtto00-universal-link
 示例：
 
 ```js
-universalLinks.subscribe("eventName", function (eventData) {
+universalLinks.subscribe('eventName', function (eventData) {
   // do some work
-  console.log("Did launch application from the link: " + eventData.url);
-});
+  console.log('Did launch application from the link: ' + eventData.url)
+})
 ```
 
 如果你没有在 `config.xml` 中配置 `eventName`, 则可以使用默认的事件名称 `didLaunchAppFromLink`。
@@ -198,11 +195,11 @@ universalLinks.subscribe("eventName", function (eventData) {
 ```js
 universalLinks.subscribe('didLaunchAppFromLink', function (eventData) {
   // do some work
-  console.log("Did launch application from the link: " + eventData.url);
-});
+  console.log('Did launch application from the link: ' + eventData.url)
+})
 ```
 
-`eventData` 参数是打开APP的链接地址。
+`eventData` 参数是打开 APP 的链接地址。
 
 比如： 对于 `http://myhost.com/news/ul-plugin-released.html?foo=bar#cordova-news`
 
@@ -224,7 +221,7 @@ universalLinks.subscribe('didLaunchAppFromLink', function (eventData) {
 如果你想，你还可以取消监听该事件，如下所示：
 
 ```js
-universalLinks.unsubscribe("eventName");
+universalLinks.unsubscribe('eventName')
 ```
 
 ### web-集成
@@ -242,7 +239,7 @@ universalLinks.unsubscribe("eventName");
 </universal-links>
 ```
 
-#### 安卓web集成
+#### 安卓 web 集成
 
 1. 在服务器上传配置文件
 
@@ -250,14 +247,14 @@ universalLinks.unsubscribe("eventName");
 
    ```json
    [
-    {
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "<PACKAGE_ID>",
-        "sha256_cert_fingerprints":["<SHA256_CERT_FINGERPRINTS>"]
-      }
-    }
+     {
+       "relation": ["delegate_permission/common.handle_all_urls"],
+       "target": {
+         "namespace": "android_app",
+         "package_name": "<PACKAGE_ID>",
+         "sha256_cert_fingerprints": ["<SHA256_CERT_FINGERPRINTS>"]
+       }
+     }
    ]
    ```
 
@@ -278,22 +275,30 @@ universalLinks.unsubscribe("eventName");
    - `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://mysite.com&elation=delegate_permission/common.handle_all_urls` 该链接应该能返回配置的正确信息。
 
    > 注意：测试链接，请更换为自己的配置信息。
+
 1. 在链接 `html` 页面上添加信息
 
    ```html
    <link rel="alternate" href="android-app://<PACKAGE_ID>/<SCHEME>/<HOST><PATH>" />
    ```
 
-   - `<PACKAGE_ID>` : APP包名。
+   - `<PACKAGE_ID>` : APP 包名。
    - `<SCHEME>`: `config.xml` 中配置的 `host` 标签协议。
    - `<HOST>`: `config.xml` 中配置的 `host` 标签域名。
    - `<PATH>`: `config.xml` 中配置的 `host` 中子元素 `path` 标签地址。假如配置多个 `path` 标签，则需要有多个对应的 `link` 标签。
 
-   > `config.xml` 中配置后，通过CLI启动命令 `cordova prepare android` 会自动在项目根目录下的 `ul_web_hooks/android` 目录中生成一个 `android_web_hook.html` 文件。可以拷贝其中的 `link` 标签，粘贴到自己网站页面的 `html` 中。
+   > `config.xml` 中配置后，通过 CLI 启动命令 `cordova prepare android` 会自动在项目根目录下的 `ul_web_hooks/android` 目录中生成一个 `android_web_hook.html` 文件。可以拷贝其中的 `link` 标签，粘贴到自己网站页面的 `html` 中。
 
-#### iOS-web集成
+1. 在其他页面手动触发打开 APP
 
-1. 在服务器上传配置文件
+   如果你想在任意的其他页面，手动触发打开 APP，
+
+   - 可以使用 `a` 标签即： `<a href="android-app://<PACKAGE_ID>/<SCHEME>/<HOST><PATH>">打开APP</a>`。
+   - 或者使用重定向：`window.location.href = 'android-app://<PACKAGE_ID>/<SCHEME>/<HOST><PATH>'`
+
+#### iOS-web 集成
+
+1. 在服务器上上传配置文件
 
    按照上面的 `config.xml` 示例，你需要在 `mysite.com` 域名所解析的服务器上的**根目录**中，创建 `.well-known` 目录，并在该目录下，创建文件 `apple-app-site-association` ，内容如下:
 
@@ -304,9 +309,7 @@ universalLinks.unsubscribe("eventName");
        "details": [
          {
            "appID": "<TEAM_ID_FROM_MEMBER_CENTER>.<BUNDLE_ID>",
-           "paths": [
-             "/some/path/*"
-           ]
+           "paths": ["/some/path/*"]
          }
        ]
      }
@@ -315,10 +318,10 @@ universalLinks.unsubscribe("eventName");
 
    也可以直接在根目录中创建该文件，`.well-known` 目录可省略。
 
-   - `<TEAM_ID_FROM_MEMBER_CENTER>` : 开发者team_id。
-   - `<BUNDLE_ID>` : APP包名。
+   - `<TEAM_ID_FROM_MEMBER_CENTER>` : 开发者 team_id。
+   - `<BUNDLE_ID>` : APP 包名。
 
-   > `config.xml` 中配置后，通过CLI启动命令 `cordova prepare ios` 会自动在项目根目录下的 `ul_web_hooks` 目录中生成文件 `<hostname>#apple-app-site-association`。可改名后直接上传到自己的域名服务器中。
+   > `config.xml` 中配置后，通过 CLI 启动命令 `cordova prepare ios` 会自动在项目根目录下的 `ul_web_hooks` 目录中生成文件 `<hostname>#apple-app-site-association`。可改名后直接上传到自己的域名服务器中。
 
 1. 确认配置文件有效性  
    按照上面的配置示例：
@@ -327,6 +330,7 @@ universalLinks.unsubscribe("eventName");
    - `https://app-site-association.cdn-apple.com/a/v1/mysite.com` 该链接应该能返回配置的正确信息。
 
    > 注意：测试链接，请更换为自己的配置信息。
+
 1. Associated Domains
 
    **注意：** 在 `apple` 开发者中心创建，在 `xcode` 中打包，所使用的证书，应该包含此功能选项。
@@ -343,7 +347,7 @@ universalLinks.unsubscribe("eventName");
    cordova run android
    ```
 
-1. 在设备上，关闭刚刚安装打开的APP
+1. 在设备上，关闭刚刚安装打开的 APP
 1. 在终端中执行：
 
    ```shell
@@ -351,12 +355,12 @@ universalLinks.unsubscribe("eventName");
    ```
 
    - `<URL>` : 响应的链接地址。按照上面的示例，应该是：`http://mysite.com/some/path/`。
-   - `<PACKAGE_ID>` : APP包名。
-   **注意：** 更换为自己的配置信息。
+   - `<PACKAGE_ID>` : APP 包名。
+     **注意：** 更换为自己的配置信息。
 
-没有出错的话，设备上应该直接打开了你正在开发的APP。
+没有出错的话，设备上应该直接打开了你正在开发的 APP。
 
-#### ios本地测试
+#### ios 本地测试
 
 1. 启动项目
 
@@ -364,8 +368,8 @@ universalLinks.unsubscribe("eventName");
    cordova run ios
    ```
 
-1. 在设备上，关闭刚刚安装打开的APP
+1. 在设备上，关闭刚刚安装打开的 APP
 1. 在设备上，打开 `safari` ，输入地址 `http://mysite.com/some/path/` 并访问。  
    **注意：** 更换为自己的配置信息。
 
-没有出错的话，设备上应该直接打开了你正在开发的APP。
+没有出错的话，设备上应该直接打开了你正在开发的 APP。
