@@ -272,7 +272,7 @@ universalLinks.unsubscribe('eventName')
    按照上面的配置示例：
 
    - `https://mysite.com/.well-known/assetlinks.json` 该链接应该能够正常访问或可以下载。
-   - `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://mysite.com&elation=delegate_permission/common.handle_all_urls` 该链接应该能返回配置的正确信息。
+   - `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://mysite.com&relation=delegate_permission/common.handle_all_urls` 该链接应该能返回配置的正确信息。
 
    > 注意：测试链接，请更换为自己的配置信息。
 
